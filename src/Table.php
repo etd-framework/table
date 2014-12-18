@@ -106,7 +106,7 @@ abstract class Table extends DataObject {
             $namespaces = array(
                 Web::getInstance()
                    ->get('app_namespace'),
-                '\\EtdSolutions\\Framework'
+                '\\EtdSolutions'
             );
 
             $className = "";
