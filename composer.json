@@ -1,6 +1,7 @@
 {
   "name": "etdsolutions/table",
   "type": "etd-package",
+  "minimum-stability": "dev",
   "description": "Package Table du Framework ETD",
   "homepage": "https://github.com/etd-framework/table",
   "license": "Apache-2.0",
