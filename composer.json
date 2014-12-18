@@ -20,7 +20,7 @@
     "joomla/language": "~1.0",
     "joomla/registry": "~1.0",
     "joomla/utilities": "~1.0",
-    "etdsolutions/user": "dev-master"
+    "etdsolutions/user": "@dev"
   },
   "autoload": {
     "psr-4": {
