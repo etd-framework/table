@@ -1,0 +1,30 @@
+{
+  "name": "etdsolutions/table",
+  "type": "etd-package",
+  "description": "Package Table du Framework ETD",
+  "homepage": "https://github.com/etd-framework/table",
+  "license": "Apache-2.0",
+  "authors": [
+    {
+      "name": "Jean-Baptiste Alleaume",
+      "email": "jb.alleaume@etd-solutions.com",
+      "homepage": "http://alleau.me",
+      "role": "Manager"
+    }
+  ],
+  "require": {
+    "php": ">=5.4",
+    "joomla/crypt": "~1.0",
+    "joomla/data": "~1.0",
+    "joomla/date": "~1.0",
+    "joomla/language": "~1.0",
+    "joomla/registry": "~1.0",
+    "joomla/utilities": "~1.0",
+    "etdsolutions/user": "dev-master"
+  },
+  "autoload": {
+    "psr-4": {
+      "EtdSolutions\\Table\\": "src/"
+    }
+  }
+}
