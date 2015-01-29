@@ -18,7 +18,7 @@
     "joomla/crypt": "~1.0",
     "joomla/data": "~1.0",
     "joomla/date": "~1.0",
-    "joomla/language": "~1.0",
+    "joomla/language": "2.*@dev",
     "joomla/registry": "~1.0",
     "joomla/utilities": "~1.0",
     "etdsolutions/user": "@dev"
