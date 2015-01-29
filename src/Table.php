@@ -169,6 +169,9 @@ abstract class Table extends DataObject {
      */
     public function load($pk = null) {
 
+        $text = Web::getInstance()
+                   ->getText();
+
         // Si aucune clé primaire n'est donné, on prend celle de l'instance.
         if (is_null($pk)) {
             $pk = $this->getProperty($this->pk);
@@ -203,7 +206,7 @@ abstract class Table extends DataObject {
 
         // On contrôle que l'on a bien un résultat.
         if (empty($row)) {
-            $this->addError(Text::_('APP_ERROR_TABLE_EMPTY_ROW'));
+            $this->addError($text->translate('APP_ERROR_TABLE_EMPTY_ROW'));
 
             return false;
         }
@@ -344,6 +347,8 @@ abstract class Table extends DataObject {
     public function publish($pks = null, $state = 1) {
 
         // On initialise les variables.
+        $text   = Web::getInstance()
+                     ->getText();
         $pks    = (array)$pks;
         $state  = (int)$state;
         $fields = $this->getFields();
@@ -355,7 +360,7 @@ abstract class Table extends DataObject {
         } elseif (in_array('state', $fields)) {
             $field = 'state';
         } else {
-            $this->addError(Text::_('APP_ERROR_TABLE_NO_PUBLISHED_FIELD'));
+            $this->addError($text->translate('APP_ERROR_TABLE_NO_PUBLISHED_FIELD'));
 
             return false;
         }

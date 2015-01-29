@@ -9,6 +9,7 @@
 
 namespace EtdSolutions\Table;
 
+use EtdSolutions\Application\Web;
 use EtdSolutions\User\User;
 use Joomla\Language\Text;
 use Joomla\Utilities\ArrayHelper;
@@ -715,6 +716,8 @@ abstract class NestedTable extends Table {
      */
     public function publish($pks = null, $state = 1, $where = null) {
 
+        $text  = Web::getInstance()
+                    ->getText();
         $k     = $this->getPk();
         $query = $this->getDb()
                       ->getQuery(true);
@@ -746,7 +749,7 @@ abstract class NestedTable extends Table {
         } elseif (in_array('state', $fields)) {
             $field = 'state';
         } else {
-            $this->addError(Text::_('APP_ERROR_TABLE_NO_PUBLISHED_FIELD'));
+            $this->addError($text->translate('APP_ERROR_TABLE_NO_PUBLISHED_FIELD'));
 
             return false;
         }
