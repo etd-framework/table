@@ -172,9 +172,9 @@ class UserTable extends Table {
             $data = $db->setQuery($query)
                           ->loadObjectList();
 
-            $profile = array();
+            $profile = new \stdClass();
             foreach($data as $d) {
-                $profile[$d->profile_key] = $d->profile_value;
+                $profile->{$d->profile_key} = $d->profile_value;
             }
 
             // On relie la ligne avec le table.
