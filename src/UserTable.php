@@ -45,7 +45,6 @@ class UserTable extends Table {
             'lastvisitDate',
             'activation',
             'params',
-            'rights',
             'lastResetTime',
             'resetCount',
             'otpKey',
@@ -61,12 +60,6 @@ class UserTable extends Table {
         if (array_key_exists('password', $properties) && !empty($properties['password']) && substr($properties['password'], 0, 4) != '$2a$' && substr($properties['password'], 0, 4) != '$2y$') {
             $simpleAuth             = new Simple();
             $properties['password'] = $simpleAuth->create($properties['password']);
-        }
-
-        // On convertit le tableau de droit en JSON.
-        if (array_key_exists('rights', $properties) && is_array($properties['rights'])) {
-            $registry             = new Registry($properties['rights']);
-            $properties['rights'] = $registry->toString();
         }
 
         // On convertit le tableau de paramètres en JSON.
