@@ -182,8 +182,16 @@ class UserTable extends Table {
 
         $db = $this->getDb();
 
+        // On vérifie que l'identifiant est unique.
+        $table = new UserTable();
+        if ($table->load(array('username' => $this->getProperty('username'))) && ($table->id != $this->getProperty('id') || $this->getProperty('id') == 0)) {
+            $text = Web::getInstance()->getText();
+            $this->addError($text->sprintf('APP_ERROR_NOT_UNIQUE_USERNAME', $this->getProperty('username')));
+            return false;
+        }
+
         // On récupère les propriétés.
-        $properties = $this->dump(0);
+        $properties = $this->dump();
 
         // On sépare les données de profil.
         $hasProfile = property_exists($properties, 'profile');
@@ -224,17 +232,19 @@ class UserTable extends Table {
                 );
             }
 
-            $query = $db->getQuery(true)
-                        ->insert('#__user_profile')
-                        ->columns(array(
-                                'user_id',
-                                'profile_key',
-                                'profile_value'
-                            ))
-                        ->values($tuples);
+            if (!empty($tuples)) {
+                $query = $db->getQuery(true)
+                    ->insert('#__user_profiles')
+                    ->columns(array(
+                        'user_id',
+                        'profile_key',
+                        'profile_value'
+                    ))
+                    ->values($tuples);
 
-            $db->setQuery($query)
-               ->execute();
+                $db->setQuery($query)
+                    ->execute();
+            }
 
         }
 
