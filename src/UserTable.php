@@ -224,12 +224,8 @@ class UserTable extends Table {
 
             $tuples = array();
 
-            foreach (get_object_vars($profile) as $k => $v) {
-                $tuples[] = array(
-                    $this->getProperty($this->getPk()),
-                    $k,
-                    $v
-                );
+            foreach ($profile as $k => $v) {
+                $tuples[] = $db->quote($this->getProperty($this->getPk())) . ", " . $db->quote($k) . ", " . $db->quote($v);
             }
 
             if (!empty($tuples)) {
