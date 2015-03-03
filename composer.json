@@ -16,7 +16,7 @@
   "require": {
     "php": ">=5.4",
     "joomla/crypt": "~1.0",
-    "joomla/data": "~1.0",
+    "etdsolutions/data": "2.*@dev",
     "joomla/date": "~1.0",
     "joomla/language": "2.*@dev",
     "joomla/registry": "2.*@dev",
