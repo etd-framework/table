@@ -9,19 +9,18 @@
 
 namespace EtdSolutions\Table;
 
-use EtdSolutions\Application\Web;
+use EtdSolutions\Language\LanguageFactory;
 use EtdSolutions\User\User;
 use Joomla\Crypt\Password\Simple;
+use Joomla\Database\DatabaseDriver;
 use Joomla\Date\Date;
 use Joomla\Registry\Registry;
 
-defined('_JEXEC') or die;
-
 class UserTable extends Table {
 
-    public function __construct() {
+    public function __construct(DatabaseDriver $db) {
 
-        parent::__construct('#__users', 'id');
+        parent::__construct('#__users', 'id', $db);
     }
 
     /**
@@ -75,12 +74,9 @@ class UserTable extends Table {
 
         $pk = $this->getProperty($this->getPk());
 
-        $db = Web::getInstance()
-                 ->getDb();
-
         // Date actuelle.
         $date = new Date();
-        $now  = $date->format($db->getDateFormat());
+        $now  = $date->format($this->db->getDateFormat());
 
         // On regarde si c'est un nouvel utilisateur ou non.
         if (empty($pk)) {
@@ -119,10 +115,6 @@ class UserTable extends Table {
             return false;
         }
 
-        // On récupère la base de données.
-        $db = Web::getInstance()
-                 ->getDb();
-
         // On formate la date suivant le type.
         if (is_numeric($date)) { // Timestamp UNIX
             $date = new Date($date);
@@ -135,15 +127,15 @@ class UserTable extends Table {
         }
 
         // On formate la date.
-        $formated_date = $date->format($db->getDateFormat());
+        $formated_date = $date->format($this->db->getDateFormat());
 
         // On met à jour la ligne.
-        $db->setQuery($db->getQuery(true)
+        $this->db->setQuery($this->db->getQuery(true)
                          ->update($this->table)
-                         ->set($db->quoteName('lastvisitDate') . " = " . $db->quote($formated_date))
-                         ->where($db->quoteName($this->pk) . ' = ' . $db->quote($pk)));
+                         ->set($this->db->quoteName('lastvisitDate') . " = " . $this->db->quote($formated_date))
+                         ->where($this->db->quoteName($this->pk) . ' = ' . $this->db->quote($pk)));
 
-        $db->execute();
+        $this->db->execute();
 
         return true;
 
@@ -156,13 +148,12 @@ class UserTable extends Table {
         if ($result) {
 
             // On récupère les données du profil.
-            $db    = $this->getDb();
-            $query = $db->getQuery(true)
+            $query = $this->db->getQuery(true)
                         ->select('a.profile_key, a.profile_value')
                         ->from('#__user_profiles AS a')
                         ->where('a.user_id = ' . (int)$this->getProperty($this->getPk()));
 
-            $data = $db->setQuery($query)
+            $data = $this->db->setQuery($query)
                           ->loadObjectList();
 
             $profile = new \stdClass();
@@ -180,12 +171,10 @@ class UserTable extends Table {
 
     public function store($updateNulls = false) {
 
-        $db = $this->getDb();
-
         // On vérifie que l'identifiant est unique.
-        $table = new UserTable();
+        $table = new UserTable($this->db);
         if ($table->load(array('username' => $this->getProperty('username'))) && ($table->id != $this->getProperty('id') || $this->getProperty('id') == 0)) {
-            $text = Web::getInstance()->getText();
+            $text = (new LanguageFactory)->getText();
             $this->addError($text->sprintf('APP_ERROR_NOT_UNIQUE_USERNAME', $this->getProperty('username')));
             return false;
         }
@@ -202,19 +191,19 @@ class UserTable extends Table {
 
         // Si une clé primaire existe on met à jour l'objet, sinon on l'insert.
         if ($this->hasPrimaryKey()) {
-            $result = $db->updateObject($this->table, $properties, $this->pk, $updateNulls);
+            $result = $this->db->updateObject($this->table, $properties, $this->pk, $updateNulls);
 
             // On traite le profil.
             if ($hasProfile) {
 
                 // On supprime toutes les clés dans la table.
-                $db->setQuery('DELETE FROM #__user_profiles WHERE user_id = ' . (int)$properties->{$this->pk})
+                $this->db->setQuery('DELETE FROM #__user_profiles WHERE user_id = ' . (int)$properties->{$this->pk})
                    ->execute();
 
             }
 
         } else {
-            $result = $db->insertObject($this->table, $properties, $this->pk);
+            $result = $this->db->insertObject($this->table, $properties, $this->pk);
 
             // On met à jour la nouvelle clé primaire dans le table.
             $this->setProperty($this->pk, $properties->{$this->pk});
@@ -225,11 +214,11 @@ class UserTable extends Table {
             $tuples = array();
 
             foreach ($profile as $k => $v) {
-                $tuples[] = $db->quote($this->getProperty($this->getPk())) . ", " . $db->quote($k) . ", " . $db->quote($v);
+                $tuples[] = $this->db->quote($this->getProperty($this->getPk())) . ", " . $this->db->quote($k) . ", " . $this->db->quote($v);
             }
 
             if (!empty($tuples)) {
-                $query = $db->getQuery(true)
+                $query = $this->db->getQuery(true)
                     ->insert('#__user_profiles')
                     ->columns(array(
                         'user_id',
@@ -238,7 +227,7 @@ class UserTable extends Table {
                     ))
                     ->values($tuples);
 
-                $db->setQuery($query)
+                $this->db->setQuery($query)
                     ->execute();
             }
 

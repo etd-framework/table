@@ -9,13 +9,10 @@
 
 namespace EtdSolutions\Table;
 
-use DumpableInterface;
-use EtdSolutions\Application\Web;
-use Joomla\Data\DataObject;
-use Joomla\Language\Text;
-use Joomla\Registry\Registry;
+use EtdSolutions\Language\LanguageFactory;
 
-defined('_JEXEC') or die;
+use Joomla\Data\DataObject;
+use Joomla\Database\DatabaseDriver;
 
 /**
  * Représentation d'une table dans la base de données.
@@ -48,19 +45,20 @@ abstract class Table extends DataObject {
     protected $locked = false;
 
     /**
-     * @var  Table  Les instances des tables.
+     * @var DatabaseDriver L'objet DatabaseDriver
      */
-    private static $instances;
+    protected $db;
 
     /**
      * Constructeur pour définir le nom de la table et la clé primaire.
      *
-     * @param   string $table Nom de la table à modéliser.
-     * @param   mixed  $pk    Nom de la clé primaire.
+     * @param   string         $table Nom de la table à modéliser.
+     * @param   mixed          $pk    Nom de la clé primaire.
+     * @param   DatabaseDriver $db L'objet DatabaseDriver.
      *
      * @throws \InvalidArgumentException
      */
-    public function __construct($table, $pk = 'id') {
+    public function __construct($table, $pk = 'id', DatabaseDriver $db) {
 
         if (empty($table)) {
             throw new \InvalidArgumentException("Table name is empty");
@@ -71,6 +69,9 @@ abstract class Table extends DataObject {
 
         // Nom de la clé primaire.
         $this->pk = $pk;
+
+        // DatabaseDriver
+        $this->db = $db;
 
         // On initialise les propriétés du Table.
         $fields = $this->getFields();
@@ -84,53 +85,6 @@ abstract class Table extends DataObject {
             }
         }
 
-    }
-
-    /**
-     * Méthode pour récupérer une instance d'un table, la créant si besoin.
-     *
-     * @param   string $name Le nom de la classe
-     *
-     * @return  Table  L'instance.
-     *
-     * @throws   \RuntimeException
-     */
-    public static function getInstance($name) {
-
-        $name  = ucfirst($name);
-        $store = md5($name);
-
-        if (empty(self::$instances[$store])) {
-
-            // On définit la liste des espaces de noms dans laquelle le modèle peut se trouver.
-            $namespaces = array(
-                Web::getInstance()
-                   ->get('app_namespace'),
-                '\\EtdSolutions'
-            );
-
-            $className = "";
-
-            // On cherche le modèle dans ces espaces de nom.
-            foreach ($namespaces as $namespace) {
-
-                $className = $namespace . '\\Table\\' . $name . 'Table';
-
-                // Si on a trouvé la classe, on arrête.
-                if (class_exists($className)) {
-                    break;
-                }
-
-            }
-            // On vérifie que l'on a bien une classe valide.
-            if (!class_exists($className)) {
-                throw new \RuntimeException("Unable find table " . $name, 500);
-            }
-
-            self::$instances[$store] = new $className();
-        }
-
-        return self::$instances[$store];
     }
 
     /**
@@ -169,8 +123,7 @@ abstract class Table extends DataObject {
      */
     public function load($pk = null) {
 
-        $text = Web::getInstance()
-                   ->getText();
+        $text = (new LanguageFactory)->getText();
 
         // Si aucune clé primaire n'est donné, on prend celle de l'instance.
         if (is_null($pk)) {
@@ -180,29 +133,25 @@ abstract class Table extends DataObject {
         // Si la clé primaire est vide, on ne charge rien.
         if (empty($pk)) {
             return false;
-        }
-
-        // On récupère la base de données.
-        $db = Web::getInstance()
-                 ->getDb();
+        };
 
         // On initialise la requête.
-        $query = $db->getQuery(true)
+        $query = $this->db->getQuery(true)
                     ->select('*')
                     ->from($this->table);
 
         if (is_array($pk)) {
             foreach ($pk as $k => $v) {
-                $query->where($db->quoteName($k) . " = " . $db->quote($v));
+                $query->where($this->db->quoteName($k) . " = " . $this->db->quote($v));
             }
         } else {
-            $query->where($db->quoteName($this->pk) . " = " . $db->quote($pk));
+            $query->where($this->db->quoteName($this->pk) . " = " . $this->db->quote($pk));
         }
 
-        $db->setQuery($query);
+        $this->db->setQuery($query);
 
         // On charge la ligne.
-        $row = $db->loadAssoc();
+        $row = $this->db->loadAssoc();
 
         // On contrôle que l'on a bien un résultat.
         if (empty($row)) {
@@ -228,7 +177,35 @@ abstract class Table extends DataObject {
         // On supprime les champs ignorés.
         $source = array_diff_key($source, array_fill_keys($ignore, null));
 
-        return parent::bind($source, $updateNulls);
+        // Bind the properties.
+        foreach ($source as $property => $value) {
+
+            // Check if the value is null and should be bound.
+            if ($value === null && !$updateNulls) {
+                continue;
+            }
+
+            // Array
+            if (is_array($value)) {
+
+                $old = $this->getProperty($property);
+
+                if ($old !== null && (is_array($old) || is_object($old))) {
+
+                    if (is_object($old)) {
+                        $old = (array) $old;
+                    }
+
+                    $value = array_merge($old, $value);
+                }
+
+            }
+
+            // Set the property.
+            $this->setProperty($property, $value);
+        }
+
+        return $this;
     }
 
     /**
@@ -254,17 +231,14 @@ abstract class Table extends DataObject {
      */
     public function store($updateNulls = false) {
 
-        $db = Web::getInstance()
-                 ->getDb();
-
         // On récupère les propriétés.
         $properties = $this->dump(0);
 
         // Si une clé primaire existe on met à jour l'objet, sinon on l'insert.
         if ($this->hasPrimaryKey()) {
-            $result = $db->updateObject($this->table, $properties, $this->pk, $updateNulls);
+            $result = $this->db->updateObject($this->table, $properties, $this->pk, $updateNulls);
         } else {
-            $result = $db->insertObject($this->table, $properties, $this->pk);
+            $result = $this->db->insertObject($this->table, $properties, $this->pk);
 
             // On met à jour la nouvelle clé primaire dans le table.
             $this->setProperty($this->pk, $properties->{$this->pk});
@@ -319,16 +293,14 @@ abstract class Table extends DataObject {
             $pk = $this->getProperty($this->pk);
         }
 
-        $db = $this->getDb();
-
         // On supprime la ligne.
-        $query = $db->getQuery(true)
+        $query = $this->db->getQuery(true)
                     ->delete($this->table);
-        $query->where($db->quoteName($this->pk) . ' = ' . $db->quote($pk));
+        $query->where($this->db->quoteName($this->pk) . ' = ' . $this->db->quote($pk));
 
-        $db->setQuery($query);
+        $this->db->setQuery($query);
 
-        $db->execute();
+        $this->db->execute();
 
         $this->clearErrors();
 
@@ -347,8 +319,7 @@ abstract class Table extends DataObject {
     public function publish($pks = null, $state = 1) {
 
         // On initialise les variables.
-        $text   = Web::getInstance()
-                     ->getText();
+        $text = (new LanguageFactory)->getText();
         $pks    = (array)$pks;
         $state  = (int)$state;
         $fields = $this->getFields();
@@ -370,14 +341,12 @@ abstract class Table extends DataObject {
             $pks = array($this->getProperty($this->getPk()));
         }
 
-        $db = $this->getDb();
-
-        $db->setQuery($db->getQuery(true)
+        $this->db->setQuery($this->db->getQuery(true)
                          ->update($this->getTable())
                          ->set($field . " = " . $state)
                          ->where($this->getPk() . " IN (" . implode(",", $pks) . ")"));
 
-        $db->execute();
+        $this->db->execute();
 
         // On met à jour l'instance si besoin.
         if (in_array($this->getProperty($this->getPk()), $pks)) {
@@ -406,11 +375,9 @@ abstract class Table extends DataObject {
             throw new \UnexpectedValueException(sprintf('%s does not support ordering.', get_class($this)));
         }
 
-        $db = $this->getDb();
-
         // Get the primary keys and ordering values for the selection.
-        $query = $db->getQuery(true)
-                    ->select($db->quoteName($this->getPk()) . ', ordering')
+        $query = $this->db->getQuery(true)
+                    ->select($this->db->quoteName($this->getPk()) . ', ordering')
                     ->from($this->getTable())
                     ->where('ordering >= 0')
                     ->order('ordering');
@@ -420,8 +387,8 @@ abstract class Table extends DataObject {
             $query->where($where);
         }
 
-        $db->setQuery($query);
-        $rows = $db->loadObjectList();
+        $this->db->setQuery($query);
+        $rows = $this->db->loadObjectList();
 
         // Compact the ordering values.
         foreach ($rows as $i => $row) {
@@ -433,9 +400,9 @@ abstract class Table extends DataObject {
                     $query->clear()
                           ->update($this->getTable())
                           ->set('ordering = ' . ($i + 1))
-                          ->where($db->quoteName($this->getPk()) . " = " . $db->quote($row->{$this->getPk()}));
-                    $db->setQuery($query);
-                    $db->execute();
+                          ->where($this->db->quoteName($this->getPk()) . " = " . $this->db->quote($row->{$this->getPk()}));
+                    $this->db->setQuery($query);
+                    $this->db->execute();
                 }
             }
         }
@@ -466,9 +433,8 @@ abstract class Table extends DataObject {
             return true;
         }
 
-        $db    = $this->getDb();
         $row   = null;
-        $query = $db->getQuery(true);
+        $query = $this->db->getQuery(true);
 
         // Select the primary key and ordering values from the table.
         $query->select($this->getPk() . ', ordering')
@@ -490,8 +456,8 @@ abstract class Table extends DataObject {
         }
 
         // Select the first row with the criteria.
-        $db->setQuery($query, 0, 1);
-        $row = $db->loadObject();
+        $this->db->setQuery($query, 0, 1);
+        $row = $this->db->loadObject();
 
         // If a row is found, move the item.
         if (!empty($row)) {
@@ -499,18 +465,18 @@ abstract class Table extends DataObject {
             $query->clear()
                   ->update($this->getTable())
                   ->set('ordering = ' . (int)$row->ordering)
-                  ->where($db->quoteName($this->getPk()) . "=" . $db->quote($this->getProperty($this->getPk())));
+                  ->where($this->db->quoteName($this->getPk()) . "=" . $this->db->quote($this->getProperty($this->getPk())));
 
-            $db->setQuery($query);
-            $db->execute();
+            $this->db->setQuery($query);
+            $this->db->execute();
 
             // Update the ordering field for the row to this instance's ordering value.
             $query->clear()
                   ->update($this->getTable())
                   ->set('ordering = ' . (int)$this->getProperty('ordering'))
-                  ->where($db->quoteName($this->getPk()) . "=" . $db->quote($row->{$this->getPk()}));
-            $db->setQuery($query);
-            $db->execute();
+                  ->where($this->db->quoteName($this->getPk()) . "=" . $this->db->quote($row->{$this->getPk()}));
+            $this->db->setQuery($query);
+            $this->db->execute();
 
             // Update the instance value.
             $this->setProperty('ordering', $row->ordering);
@@ -519,9 +485,9 @@ abstract class Table extends DataObject {
             $query->clear()
                   ->update($this->getTable())
                   ->set('ordering = ' . (int)$this->getProperty('ordering'))
-                  ->where($db->quoteName($this->getPk()) . "=" . $db->quote($this->getProperty($this->getPk())));
-            $db->setQuery($query);
-            $db->execute();
+                  ->where($this->db->quoteName($this->getPk()) . "=" . $this->db->quote($this->getProperty($this->getPk())));
+            $this->db->setQuery($query);
+            $this->db->execute();
         }
 
         return true;
@@ -615,8 +581,7 @@ abstract class Table extends DataObject {
      */
     protected function lock() {
 
-        $this->getDb()
-             ->lockTable($this->getTable());
+        $this->db->lockTable($this->getTable());
         $this->locked = true;
 
         return true;
@@ -631,22 +596,10 @@ abstract class Table extends DataObject {
      */
     protected function unlock() {
 
-        $this->getDb()
-             ->unlockTables();
+        $this->db->unlockTables();
         $this->locked = false;
 
         return true;
-    }
-
-    /**
-     * Méthode pour renvoyer l'objet global de base de données.
-     *
-     * @return \Joomla\Database\DatabaseDriver
-     */
-    protected function getDb() {
-
-        return Web::getInstance()
-                  ->getDb();
     }
 
 }

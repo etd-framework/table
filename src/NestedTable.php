@@ -14,7 +14,7 @@ use EtdSolutions\User\User;
 use Joomla\Language\Text;
 use Joomla\Utilities\ArrayHelper;
 
-defined('_JEXEC') or die;
+
 
 /**
  * Représentation d'une table supportant la gestion d'un arbre dans la base de données.
@@ -724,7 +724,7 @@ abstract class NestedTable extends Table {
 
         // On nettoie les entrées.
         ArrayHelper::toInteger($pks);
-        $userId = (int)User::getInstance()->id;
+        $userId = (int)(new User)->setContainer($this->getContainer())->getUser()->id;
         $state  = (int)$state;
 
         // Si $state > 1, on autorise le changement d'état meme si l'ancètre a un état inférieur
