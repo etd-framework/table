@@ -13,6 +13,7 @@ use EtdSolutions\Language\LanguageFactory;
 
 use Joomla\Data\DataObject;
 use Joomla\Database\DatabaseDriver;
+use Joomla\String\StringHelper;
 
 /**
  * Représentation d'une table dans la base de données.
@@ -600,6 +601,36 @@ abstract class Table extends DataObject {
         $this->locked = false;
 
         return true;
+    }
+
+    /**
+     * This method processes a string and replaces all accented UTF-8 characters by unaccented
+     * ASCII-7 "equivalents", whitespaces are replaced by hyphens and the string is lowercase.
+     *
+     * @param   string  $string  String to process
+     *
+     * @return  string  Processed string
+     *
+     * @since   1.0
+     */
+    public static function stringURLSafe($string) {
+
+        // Remove any '-' from the string since they will be used as concatenaters
+        $str = str_replace('-', ' ', $string);
+
+        $factory = new LanguageFactory();
+        $str = $factory->getLanguage()->transliterate($str);
+
+        // Trim white spaces at beginning and end of alias and make lowercase
+        $str = trim(StringHelper::strtolower($str));
+
+        // Remove any duplicate whitespace, and ensure all characters are alphanumeric
+        $str = preg_replace('/(\s|[^A-Za-z0-9\-])+/', '-', $str);
+
+        // Trim dashes at beginning and end of alias
+        $str = trim($str, '-');
+
+        return $str;
     }
 
 }
