@@ -67,7 +67,7 @@ abstract class NestedTable extends Table {
         $pk = (is_null($pk)) ? $this->getProperty($k) : $pk;
 
         // On récupère le noeud et ses enfants comme un arbre.
-        $db    = $this->getDb();
+        $db    = $this->db;
         $query = $db->getQuery(true)
                     ->select('n.*')
                     ->from($this->getTable() . ' AS n, ' . $this->getTable() . ' AS p')
@@ -144,7 +144,7 @@ abstract class NestedTable extends Table {
 
         $k  = $this->getPk();
         $pk = $this->getProperty($k);
-        $db = $this->getDb();
+        $db = $this->db;
 
         $query = $db->getQuery(true)
                     ->select($k)
@@ -191,7 +191,7 @@ abstract class NestedTable extends Table {
 
         $k  = $this->getPk();
         $pk = (is_null($pk)) ? $this->getProperty($k) : $pk;
-        $db = $this->getDb();
+        $db = $this->db;
 
         // On récupère le noeud par l'id.
         if (!$node = $this->getNode($pk)) {
@@ -411,7 +411,7 @@ abstract class NestedTable extends Table {
 
         $k  = $this->getPk();
         $pk = (is_null($pk)) ? $this->getProperty($k) : $pk;
-        $db = $this->getDb();
+        $db = $this->db;
 
         $this->lock();
 
@@ -548,7 +548,7 @@ abstract class NestedTable extends Table {
      */
     public function check() {
 
-        $db = $this->getDb();
+        $db = $this->db;
         $this->setProperty('parent_id', (int)$this->getProperty('parent_id'));
 
         // On contrôle que le champ parent_id est valide.
@@ -607,7 +607,7 @@ abstract class NestedTable extends Table {
                 if ($this->_location_id == 0) {
 
                     // On récupère le dernier noeud comme référence.
-                    $query = $this->getDb()
+                    $query = $this->db
                                   ->getQuery(true)
                                   ->select($this->getPk() . ', parent_id, level, lft, rgt')
                                   ->from($this->getTable())
@@ -618,9 +618,9 @@ abstract class NestedTable extends Table {
                         $query->where($where);
                     }
 
-                    $this->getDb()
+                    $this->db
                          ->setQuery($query, 0, 1);
-                    $reference = $this->getDb()
+                    $reference = $this->db
                                       ->loadObject();
 
                 } else { // On a un vrai noeud de définie comme référence.
@@ -640,7 +640,7 @@ abstract class NestedTable extends Table {
                     return false;
                 }
 
-                $query = $this->getDb()
+                $query = $this->db
                               ->getQuery(true)
                               ->update($this->getTable())
                               ->set('lft = lft + 2')
@@ -650,7 +650,7 @@ abstract class NestedTable extends Table {
                     $query->where($where);
                 }
 
-                $this->getDb()
+                $this->db
                      ->setQuery($query)
                      ->execute();
 
@@ -664,7 +664,7 @@ abstract class NestedTable extends Table {
                     $query->where($where);
                 }
 
-                $this->getDb()
+                $this->db
                      ->setQuery($query)
                      ->execute();
 
@@ -719,7 +719,7 @@ abstract class NestedTable extends Table {
         $text  = Web::getInstance()
                     ->getText();
         $k     = $this->getPk();
-        $query = $this->getDb()
+        $query = $this->db
                       ->getQuery(true);
 
         // On nettoie les entrées.
@@ -768,12 +768,12 @@ abstract class NestedTable extends Table {
                 // On récupère les noeuds ancètres qui ont un plus petit état.
                 $query->clear()
                       ->select('n.' . $k)
-                      ->from($this->getDb()
+                      ->from($this->db
                                   ->quoteName($this->getTable()) . ' AS n')
                       ->where('n.lft < ' . (int)$node->lft)
                       ->where('n.rgt > ' . (int)$node->rgt)
                       ->where('n.parent_id > 0')
-                      ->where('n.' . $this->getDb()
+                      ->where('n.' . $this->db
                                           ->quoteName($field) . ' < ' . (int)$compareState);
 
                 if ($where) {
@@ -781,10 +781,10 @@ abstract class NestedTable extends Table {
                 }
 
                 // On récupère juste une ligne (c'est déjà une de trop !).
-                $this->getDb()
+                $this->db
                      ->setQuery($query, 0, 1);
 
-                $rows = $this->getDb()
+                $rows = $this->db
                              ->loadColumn();
 
                 if (!empty($rows)) {
@@ -794,9 +794,9 @@ abstract class NestedTable extends Table {
 
             // On met à jour en cascade les états.
             $query->clear()
-                  ->update($this->getDb()
+                  ->update($this->db
                                 ->quoteName($this->getTable()))
-                  ->set($this->getDb()
+                  ->set($this->db
                              ->quoteName($field) . ' = ' . (int)$state)
                   ->where('(lft > ' . (int)$node->lft . ' AND rgt < ' . (int)$node->rgt . ') OR ' . $k . ' = ' . (int)$pk);
 
@@ -804,7 +804,7 @@ abstract class NestedTable extends Table {
                 $query->where($where);
             }
 
-            $this->getDb()
+            $this->db
                  ->setQuery($query)
                  ->execute();
 
@@ -856,7 +856,7 @@ abstract class NestedTable extends Table {
 
         try {
 
-            $query = $this->getDb()
+            $query = $this->db
                           ->getQuery(true)
                           ->select($this->getPk())
                           ->from($this->getTable())
@@ -866,7 +866,7 @@ abstract class NestedTable extends Table {
                 $query->where($where);
             }
 
-            $children = $this->getDb()
+            $children = $this->db
                              ->setQuery($query)
                              ->loadColumn();
 
@@ -880,7 +880,7 @@ abstract class NestedTable extends Table {
                 $query->where($where);
             }
 
-            $this->getDb()
+            $this->db
                  ->setQuery($query)
                  ->execute();
 
@@ -895,7 +895,7 @@ abstract class NestedTable extends Table {
                 $query->where($where);
             }
 
-            $this->getDb()
+            $this->db
                  ->setQuery($query)
                  ->execute();
 
@@ -946,7 +946,7 @@ abstract class NestedTable extends Table {
 
         try {
 
-            $query = $this->getDb()
+            $query = $this->db
                           ->getQuery(true)
                           ->select($this->getPk())
                           ->from($this->getTable())
@@ -956,7 +956,7 @@ abstract class NestedTable extends Table {
                 $query->where($where);
             }
 
-            $children = $this->getDb()
+            $children = $this->db
                              ->setQuery($query)
                              ->loadColumn();
 
@@ -970,7 +970,7 @@ abstract class NestedTable extends Table {
                 $query->where($where);
             }
 
-            $this->getDb()
+            $this->db
                  ->setQuery($query)
                  ->execute();
 
@@ -985,7 +985,7 @@ abstract class NestedTable extends Table {
                 $query->where($where);
             }
 
-            $this->getDb()
+            $this->db
                  ->setQuery($query)
                  ->execute();
 
@@ -1014,7 +1014,7 @@ abstract class NestedTable extends Table {
         $k = $this->getPk();
 
         // Test for a unique record with parent_id = 0
-        $query = $this->getDb()
+        $query = $this->db
                       ->getQuery(true)
                       ->select($k)
                       ->from($this->getTable())
@@ -1024,7 +1024,7 @@ abstract class NestedTable extends Table {
             $query->where($where);
         }
 
-        $result = $this->getDb()
+        $result = $this->db
                        ->setQuery($query)
                        ->loadColumn();
 
@@ -1042,7 +1042,7 @@ abstract class NestedTable extends Table {
             $query->where($where);
         }
 
-        $result = $this->getDb()
+        $result = $this->db
                        ->setQuery($query)
                        ->loadColumn();
 
@@ -1057,14 +1057,14 @@ abstract class NestedTable extends Table {
             $query->clear()
                   ->select($k)
                   ->from($this->getTable())
-                  ->where('alias = ' . $this->getDb()
+                  ->where('alias = ' . $this->db
                                             ->quote('root'));
 
             if ($where) {
                 $query->where($where);
             }
 
-            $result = $this->getDb()
+            $result = $this->db
                            ->setQuery($query)
                            ->loadColumn();
 
@@ -1102,8 +1102,7 @@ abstract class NestedTable extends Table {
             }
         }
 
-        $query = $this->getDb()
-                      ->getQuery(true);
+        $query = $this->db->getQuery(true);
 
         // On construit la strucuture de la requête récursive.
         if (!isset($this->cache['rebuild.sql'])) {
@@ -1131,10 +1130,10 @@ abstract class NestedTable extends Table {
         }
 
         // On assemble la requête pour trouver les enfants du noeuds.
-        $this->getDb()
+        $this->db
              ->setQuery(sprintf($this->cache['rebuild.sql'], (int)$parentId));
 
-        $children = $this->getDb()
+        $children = $this->db
                          ->loadObjectList();
 
         // La valeur de droite du noeud est la gauche + 1.
@@ -1173,11 +1172,11 @@ abstract class NestedTable extends Table {
         }
 
         if (property_exists($this, 'path')) {
-            $query->set('path = ' . $this->getDb()
+            $query->set('path = ' . $this->db
                                          ->quote($path));
         }
 
-        $this->getDb()
+        $this->db
              ->setQuery($query)
              ->execute();
 
@@ -1204,7 +1203,7 @@ abstract class NestedTable extends Table {
 
         $k  = $this->getPk();
         $pk = (is_null($pk)) ? $this->$k : $pk;
-        $db = $this->getDb();
+        $db = $this->db;
 
         // On récupère les alias pour le chemin du noeud jusqu'au noeud racine.
         $query = $db->getQuery(true)
@@ -1265,7 +1264,7 @@ abstract class NestedTable extends Table {
      */
     public function saveorder($idArray = null, $lft_array = null, $where = null) {
 
-        $db = $this->getDb();
+        $db = $this->db;
 
         try {
             $query = $db->getQuery(true);
@@ -1333,7 +1332,7 @@ abstract class NestedTable extends Table {
         }
 
         // On récupère le noeud.
-        $query = $this->getDb()
+        $query = $this->db
                       ->getQuery(true)
                       ->select($this->getPk() . ', parent_id, level, lft, rgt')
                       ->from($this->getTable())
@@ -1343,7 +1342,7 @@ abstract class NestedTable extends Table {
             $query->where($where);
         }
 
-        $row = $this->getDb()
+        $row = $this->db
                     ->setQuery($query, 0, 1)
                     ->loadObject();
 
