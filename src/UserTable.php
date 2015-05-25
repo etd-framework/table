@@ -55,15 +55,9 @@ class UserTable extends Table {
 
     public function bind($properties, $updateNulls = true, $ignore = array()) {
 
-        // On génère le mot de passe crypté si besoin.
-        if (array_key_exists('password', $properties) && !empty($properties['password']) && substr($properties['password'], 0, 4) != '$2a$' && substr($properties['password'], 0, 4) != '$2y$') {
-            $simpleAuth             = new Simple();
-            $properties['password'] = $simpleAuth->create($properties['password']);
-        }
-
         // On convertit le tableau de paramètres en JSON.
         if (array_key_exists('params', $properties) && is_array($properties['params'])) {
-            $registry             = new Registry($properties['params']);
+            $registry = new Registry($properties['params']);
             $properties['params'] = $registry->toString();
         }
 
@@ -71,26 +65,6 @@ class UserTable extends Table {
     }
 
     public function check() {
-
-        $pk = $this->getProperty($this->getPk());
-
-        // Date actuelle.
-        $date = new Date();
-        $now  = $date->format($this->db->getDateFormat());
-
-        // On regarde si c'est un nouvel utilisateur ou non.
-        if (empty($pk)) {
-
-            // On contrôle le mot de passe et on crée le mot de passe crypté si besoin.
-            if (empty($this->password)) {
-                $simpleAuth = new Simple();
-                $this->setProperty('password', $simpleAuth->create(User::genRandomPassword()));
-            }
-
-            // On définit la date d'inscription.
-            $this->setProperty('registerDate', $now);
-
-        }
 
         // On contrôle que le nom d'utilisateur n'est pas plus long que 150 caractères.
         $username = $this->getProperty('username');
