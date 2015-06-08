@@ -22,8 +22,7 @@
     "joomla/utilities": "~1.0",
     "joomla/database": "~1.0",
     "joomla/string": "~1.0",
-    "etdsolutions/language": "@dev",
-    "etdsolutions/user": "@dev"
+    "etdsolutions/language": "@dev"
   },
   "autoload": {
     "psr-4": {

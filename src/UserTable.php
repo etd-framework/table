@@ -10,8 +10,6 @@
 namespace EtdSolutions\Table;
 
 use EtdSolutions\Language\LanguageFactory;
-use EtdSolutions\User\User;
-use Joomla\Crypt\Password\Simple;
 use Joomla\Database\DatabaseDriver;
 use Joomla\Date\Date;
 use Joomla\Registry\Registry;
