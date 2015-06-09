@@ -9,12 +9,8 @@
 
 namespace EtdSolutions\Table;
 
-use EtdSolutions\Application\Web;
-use EtdSolutions\User\User;
-use Joomla\Language\Text;
+use EtdSolutions\Language\LanguageFactory;
 use Joomla\Utilities\ArrayHelper;
-
-
 
 /**
  * Représentation d'une table supportant la gestion d'un arbre dans la base de données.
@@ -716,15 +712,12 @@ abstract class NestedTable extends Table {
      */
     public function publish($pks = null, $state = 1, $where = null) {
 
-        $text  = Web::getInstance()
-                    ->getText();
         $k     = $this->getPk();
-        $query = $this->db
-                      ->getQuery(true);
+        $query = $this->db->getQuery(true);
+        $text  = (new LanguageFactory())->getText();
 
         // On nettoie les entrées.
         ArrayHelper::toInteger($pks);
-        $userId = (int)(new User)->setContainer($this->getContainer())->getUser()->id;
         $state  = (int)$state;
 
         // Si $state > 1, on autorise le changement d'état meme si l'ancètre a un état inférieur
@@ -737,7 +730,7 @@ abstract class NestedTable extends Table {
                 $pks = explode(',', $this->$k);
             } // rien à faire ici ...
             else {
-                throw new \UnexpectedValueException(sprintf('%s::publish(%s, %d, %d) empty.', get_class($this), $pks, $state, $userId));
+                throw new \UnexpectedValueException(sprintf('%s::publish(%s, %d, %d) empty.', get_class($this), $pks, $state));
             }
         }
 
@@ -788,7 +781,7 @@ abstract class NestedTable extends Table {
                              ->loadColumn();
 
                 if (!empty($rows)) {
-                    throw new \UnexpectedValueException(sprintf('%s::publish(%s, %d, %d) ancestors have lower state.', get_class($this), $pks, $state, $userId));
+                    throw new \UnexpectedValueException(sprintf('%s::publish(%s, %d, %d) ancestors have lower state.', get_class($this), $pks, $state));
                 }
             }
 
