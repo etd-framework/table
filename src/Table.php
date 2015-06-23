@@ -514,13 +514,24 @@ abstract class Table extends DataObject {
     /**
      * Contrôle que la clé primaire a été définit.
      *
-     * @return  boolean  True si la clé primaire est définit.
+     * @return  boolean  True si la clé primaire est définie.
      */
     public function hasPrimaryKey() {
 
-        $pk = $this->getProperty($this->pk);
+        $pks = (array) $this->pk;
+        $ret = true;
 
-        return !empty($pk);
+        foreach($pks as $pk) {
+
+            $value = $this->getProperty($pk);
+            if (empty($value)) {
+                return false;
+            }
+
+        }
+
+        return $ret;
+
     }
 
     /**
