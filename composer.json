@@ -22,6 +22,7 @@
     "joomla/utilities": "~1.0",
     "joomla/database": "~1.0",
     "joomla/string": "~1.0",
+    "joomla/di": "2.0.*@dev",
     "etdsolutions/language": "@dev"
   },
   "autoload": {

@@ -13,12 +13,16 @@ use EtdSolutions\Language\LanguageFactory;
 
 use Joomla\Data\DataObject;
 use Joomla\Database\DatabaseDriver;
+use Joomla\DI\ContainerAwareInterface;
+use Joomla\DI\ContainerAwareTrait;
 use Joomla\String\StringHelper;
 
 /**
  * Représentation d'une table dans la base de données.
  */
-abstract class Table extends DataObject {
+abstract class Table extends DataObject implements ContainerAwareInterface {
+
+    use ContainerAwareTrait;
 
     /**
      * @var string Nom du table.
