@@ -208,4 +208,41 @@ class UserTable extends Table {
         return $result;
     }
 
+    /**
+     * Méthode pour définir l'état d'activation d'une ligne ou d'une liste de lignes.
+     *
+     * @param   mixed $pks        Un tableau optionnel des clés primaires à modifier.
+     *                            Si non définit, on prend la valeur de l'instance.
+     * @param   int   $state      L'état de publication. eg. [0 = dépublié, 1 = publié]
+     *
+     * @return  bool  True en cas de succès, false sinon.
+     */
+    public function block($pks = null, $state = 1) {
+
+        // On initialise les variables.
+        $pks    = (array)$pks;
+        $state  = (int)$state;
+
+        // S'il n'y a pas de clés primaires de défini on regarde si on en a une dans l'instance.
+        if (empty($pks)) {
+            $pks = array($this->getProperty($this->getPk()));
+        }
+
+        $this->db->setQuery($this->db->getQuery(true)
+                                     ->update($this->getTable())
+                                     ->set("block = " . $state)
+                                     ->where($this->getPk() . " IN (" . implode(",", $pks) . ")"));
+
+        $this->db->execute();
+
+        // On met à jour l'instance si besoin.
+        if (in_array($this->getProperty($this->getPk()), $pks)) {
+            $this->setProperty("block", $state);
+        }
+
+        $this->clearErrors();
+
+        return true;
+    }
+
 }
