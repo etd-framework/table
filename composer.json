@@ -16,13 +16,13 @@
   "require": {
     "php": ">=5.4",
     "joomla/crypt": "~1.0",
-    "joomla/data": "2.0.*@dev",
+    "joomla/data": "~2.0@dev",
     "joomla/date": "~1.0",
-    "joomla/registry": "2.0.*@dev",
+    "joomla/registry": "~2.0@dev",
     "joomla/utilities": "~1.0",
-    "joomla/database": "~1.0",
+    "joomla/database": "~2.0@dev",
     "joomla/string": "~1.0",
-    "joomla/di": "2.0.*@dev",
+    "joomla/di": "~2.0@dev",
     "etdsolutions/language": "@dev"
   },
   "autoload": {
