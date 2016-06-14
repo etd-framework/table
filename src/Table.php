@@ -128,7 +128,6 @@ abstract class Table extends DataObject implements ContainerAwareInterface {
      */
     public function load($pk = null) {
 
-        $text = (new LanguageFactory)->getText();
 
         // Si aucune clé primaire n'est donné, on prend celle de l'instance.
         if (is_null($pk)) {
@@ -142,8 +141,8 @@ abstract class Table extends DataObject implements ContainerAwareInterface {
 
         // On initialise la requête.
         $query = $this->db->getQuery(true)
-                    ->select('*')
-                    ->from($this->table);
+                          ->select('*')
+                          ->from($this->table);
 
         if (is_array($pk)) {
             foreach ($pk as $k => $v) {
@@ -160,7 +159,7 @@ abstract class Table extends DataObject implements ContainerAwareInterface {
 
         // On contrôle que l'on a bien un résultat.
         if (empty($row)) {
-            $this->addError($text->translate('APP_ERROR_TABLE_EMPTY_ROW'));
+            $this->addError($this->getContainer()->get('language')->getText()->translate('APP_ERROR_TABLE_EMPTY_ROW'));
 
             return false;
         }
