@@ -145,6 +145,7 @@ class UserTable extends Table {
 
         // On vérifie que l'identifiant est unique.
         $table = new UserTable($this->db);
+        $table->setContainer($this->getContainer());
         if ($table->load(array('username' => $this->getProperty('username'))) && ($table->id != $this->getProperty('id') || $this->getProperty('id') == 0)) {
             $text = (new LanguageFactory)->getText();
             $this->addError($text->sprintf('APP_ERROR_NOT_UNIQUE_USERNAME', $this->getProperty('username')));
