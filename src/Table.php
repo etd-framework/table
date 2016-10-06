@@ -323,7 +323,9 @@ abstract class Table extends DataObject implements ContainerAwareInterface {
     public function publish($pks = null, $state = 1) {
 
         // On initialise les variables.
-        $text = (new LanguageFactory)->getText();
+        $text   = $this->getContainer()
+                       ->get('language')
+                       ->getText();
         $pks    = (array)$pks;
         $state  = (int)$state;
         $fields = $this->getFields();
